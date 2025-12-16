@@ -219,14 +219,18 @@ if __name__ == '__main__':
     if flag_count > 1:
         raise ValueError("Choose only one of --use_base_conf, --use_target, or --use_pairs when loading models.")
 
-    if args.use_base_conf:
-        model_path = os.path.join(model_path, 'cf_lm_target_conf', args.cf_type)
-    elif args.use_target:
-        model_path = os.path.join(model_path, 'cf_lm_target', args.cf_type)
-    elif args.use_pairs:
-        model_path = os.path.join(model_path, 'cf_lm', args.cf_type)
-    elif cf_pct != 0:
-        model_path = os.path.join(model_path, 'cf', args.cf_type)
+    if cf_pct != 0:
+        if args.use_base_conf:
+            model_path = os.path.join(model_path, 'cf_lm_target_conf', args.cf_type)
+        elif args.use_target:
+            model_path = os.path.join(model_path, 'cf_lm_target', args.cf_type)
+        elif args.use_pairs:
+            model_path = os.path.join(model_path, 'cf_lm', args.cf_type)
+        else:
+            model_path = os.path.join(model_path, 'cf', args.cf_type)
+    elif flag_count:
+        # When no counterfactual percentage is requested, keep the vanilla model even if cf flags are passed.
+        print('cf_pct is 0; loading vanilla model despite counterfactual flags.')
     if model_name=='GCN':
         model = GCN(5,input_dim,hidden_dim,output_dim,0.8,dropout).to(device)
         if cf_suffix=='':

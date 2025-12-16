@@ -328,19 +328,27 @@ def _load_model(model_name: str,
                 weights_path: str = None):
     model = _build_model(model_name, dataset_name, dataset, device, hidden_dim=hidden_dim, dropout=dropout)
 
-    candidates = [
-        weights_path,
-        f'./trained_model/{dataset_name}_{model_name}.pt',
-        f'./trained_model/{dataset_name.upper()}_{model_name}.pt',
-        f'./trained_model/{dataset_name}_{model_name.upper()}.pt'
-    ]
+    candidates = []
+    if weights_path is not None:
+        candidates.append(weights_path)
+    else:
+        candidates.extend([
+            f'./trained_model/{dataset_name}_{model_name}.pt',
+            f'./trained_model/{dataset_name.upper()}_{model_name}.pt',
+            f'./trained_model/{dataset_name}_{model_name.upper()}.pt'
+        ])
     weight_path = None
     for path in candidates:
         if path is not None and os.path.exists(path):
             weight_path = path
             break
     if weight_path is None:
+        if weights_path is not None:
+            raise FileNotFoundError(f'Specified weights_path not found: {weights_path}')
         raise FileNotFoundError(f'Model weights not found for {dataset_name}_{model_name}')
+    if weights_path is not None and weight_path != weights_path:
+        raise FileNotFoundError(f'Specified weights_path not found: {weights_path}')
+    print(f'Loading weights from: {weight_path}')
     state = torch.load(weight_path, map_location=device)
     model.load_state_dict(state)
     model.eval()
